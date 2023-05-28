@@ -33,8 +33,3 @@ spring:
         max-wait: -1
         max-idle: 5
         min-idle: 0
-
-#wechat:
-#  mpAppId: wxda97426bcfc3d1c2
-#  mpAppSecret: ddfcee281e409528d728a45884f1ac94
-#  userInfoUrl: http://ggkt2.vipgz1.91tunnel.com/admin/wechat/userInfo
