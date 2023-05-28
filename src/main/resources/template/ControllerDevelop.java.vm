@@ -1,0 +1,91 @@
+package ${rootPackage}.${moduleNamePoint}controller;
+
+import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import ${rootPackage}.common.result.Result;
+import ${rootPackage}.common.result.ResultCodeEnum;
+import ${rootPackage}.config.execption.MyException;
+import ${rootPackage}.${moduleNamePoint}entity.${className};
+import ${rootPackage}.${moduleNamePoint}service.${className}Service;
+import ${rootPackage}.${moduleNamePoint}vo.${className}Vo;
+import ${rootPackage}.util.MyIdUtil;
+import org.springframework.web.bind.annotation.*;
+import javax.annotation.Resource;
+import java.time.LocalDateTime;
+
+/**
+ * <p>
+ *  前端控制器
+ * </p>
+ *
+ * @author ${author}
+ * @since ${createTime}
+ */
+@RestController
+@RequestMapping("${moduleName_}/${apiName}")
+public class ${className}Controller {
+    @Resource
+    private ${className}Service ${fieldName}Service;
+
+    @GetMapping("/get/{id}")
+    public Result<${className}> get(@PathVariable String id){
+        return Result.ok(${fieldName}Service.getById(id));
+    }
+
+    @PostMapping("/insert")
+    public Result<String> insert(@RequestBody ${className} ${fieldName}){
+        String id = MyIdUtil.nextIdStr();
+        ${fieldName}.setCreateTime(LocalDateTime.now());
+        ${fieldName}.setId(id);
+        ${fieldName}.setIsDeleted(false);
+        boolean isSuccess = ${fieldName}Service.save(${fieldName});
+        if(isSuccess){
+            return Result.ok(id);
+        }else{
+            throw new MyException(ResultCodeEnum.DATA_SAVE_FAIL);
+        }
+    }
+
+    @PostMapping("/update")
+    public Result<String> update(@RequestBody ${className} ${fieldName}){
+        ${fieldName}.setUpdateTime(LocalDateTime.now());
+        boolean isSuccess = ${fieldName}Service.updateById(${fieldName});
+        if(isSuccess){
+            return Result.ok("修改成功");
+        }else{
+            throw new MyException(ResultCodeEnum.DATA_SAVE_FAIL);
+        }
+    }
+
+    @PostMapping("/delete")
+    public Result<String> delete(String id){
+        boolean isSuccess = ${fieldName}Service.removeById(id);
+        if(isSuccess){
+            return Result.ok("删除成功");
+        }else{
+            throw new MyException(ResultCodeEnum.DATA_DELETE_FAIL);
+        }
+    }
+
+    @PostMapping("/page")
+    public Result<Page<${className}>> page(@RequestBody ${className}Vo ${fieldName}Vo){
+        Page<${className}> ${fieldName}Page = new Page<>(${fieldName}Vo.getPage(), ${fieldName}Vo.getLimit());
+        LambdaQueryWrapper<${className}>wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(${className}::getIsDeleted, false);
+        #foreach($!tableColumn in $!tableColumns)
+            #if( $tableColumn.getNeedWhere() == '1' )
+                #if ($tableColumn.getJavaType() == "String")
+        if(StrUtil.isNotBlank(${fieldName}Vo.get$tableColumn.getFieldNameUp()())){
+            wrapper.eq(${className}::get$tableColumn.getFieldNameUp(), ${fieldName}Vo.get$tableColumn.getFieldNameUp()());
+        }
+                #else
+        if((${fieldName}Vo.get$tableColumn.getFieldNameUp()())!=null){
+            wrapper.eq(${className}::get$tableColumn.getFieldNameUp(), ${fieldName}Vo.get$tableColumn.getFieldNameUp()());
+        }
+                #end
+            #end
+        #end
+        return Result.ok(${fieldName}Service.page(${fieldName}Page, wrapper));
+    }
+}

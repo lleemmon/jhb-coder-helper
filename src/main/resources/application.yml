@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: jhb-code-helper
+  profiles:
+    active: dev

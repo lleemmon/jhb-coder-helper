@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jhb.develop.mapper.DevelopMapper">
+
+    <select id="getTableNameSelection" resultType="com.jhb.develop.vo.SelectVo">
+        select table_name as label,table_name as value from information_schema.tables
+        where TABLE_SCHEMA = 'jhb_code_helper' and
+            table_name NOT IN (select TABLE_NAME from sys_generator_table where can_generator = 0)
+    </select>
+
+    <select id="getSysGeneratorTableList" resultType="com.jhb.develop.entity.SysGeneratorTable">
+        select ist.table_name, sgt.id, sgt.CREATE_TIME,sgt.is_generator_front,
+            sgt.is_generator_end,sgt.remarks, if(sgt.id is null, '0', '1') in_table, sgt.module_name
+            , sgt.need_crud_controller, sgt.author from
+             (select table_name from information_schema.tables where TABLE_SCHEMA = 'jhb_code_helper')ist
+                 left join (select id, CREATE_TIME, can_generator, remarks, table_name,
+                    is_generator_front, is_generator_end, module_name, need_crud_controller, author
+            from sys_generator_table where IS_DELETED = 0) as sgt on ist.table_name = sgt.table_name
+         where (sgt.can_generator is null or sgt.can_generator = '1')
+        <if test="inTable != null and inTable == '0'.toString()"> and sgt.id is null </if>
+        <if test="inTable != null and inTable == '1'.toString()"> and sgt.id is not null </if>
+        <if test="isGeneratorFront != null and isGeneratorFront != ''"> and sgt.is_generator_front = #{isGeneratorFront} </if>
+        <if test="isGeneratorEnd != null and isGeneratorEnd != ''"> and sgt.is_generator_end = #{isGeneratorEnd} </if>
+        <if test="tableName != null and tableName != ''"> and ist.table_name like "%"#{tableName}"%" </if>
+        <if test="moduleName != null and moduleName != ''"> and sgt.module_name like "%"#{moduleName}"%" </if>
+        limit #{start}, #{limit}
+    </select>
+
+    <select id="getTableFieldList" resultType="com.jhb.develop.vo.TableFieldVo">
+        select t.COLUMN_NAME, t.DATA_TYPE, IFNULL(sgf.remarks, t.COLUMN_COMMENT) REMARKS,
+               ifnull(sgf.IS_NULLABLE, t.IS_NULLABLE) IS_NULLABLE, sgf.id, sgf.table_id,
+               sgf.DATA_TYPE, sgf.COMPONENT, sgf.NEED_LIST, sgf.NEED_WHERE, sgf.NEED_FORM, sgf.type from
+            (select COLUMN_NAME, DATA_TYPE, COLUMN_COMMENT, if(IS_NULLABLE = 'NO', '0', '1') IS_NULLABLE from information_schema.columns where table_name = #{tableName})t
+                left join (select id, table_id, COLUMN_NAME, DATA_TYPE, COMPONENT, NEED_LIST, NEED_WHERE, NEED_FORM, remarks, type, IS_NULLABLE from sys_generator_field
+                           where is_deleted = 0 and table_name = #{tableName}) sgf on t.COLUMN_NAME = sgf.COLUMN_NAME
+    </select>
+</mapper>

@@ -1,0 +1,12 @@
+package ${rootPackage}.${moduleName}vo;
+
+import ${rootPackage}.${moduleName}entity.${className};
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+@Data
+@EqualsAndHashCode(callSuper = false)
+public class ${className}Vo extends ${className} {
+    private Integer page;
+    private Integer limit;
+}

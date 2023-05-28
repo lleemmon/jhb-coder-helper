@@ -1,0 +1,42 @@
+import request from '@/utils/request'
+//GET 就是 'get'; POST就是'post';
+import { GET, POST } from '../../${pathOffset}common.js'
+
+const api_name = '${moduleName}/${apiName}'
+
+export default {
+    get(id) {
+        return request({
+            url: `${api_name}/get/${id}`,
+            method: GET
+        })
+    },
+    insert(data){
+        return request({
+            url: `${api_name}/insert`,
+            method: POST,
+            data: data
+        })
+    },
+    update(data){
+        return request({
+            url: `${api_name}/update`,
+            method: POST,
+            data: data
+        })
+    },
+    delete(id){
+        return request({
+            url: `${api_name}/delete`,
+            method: POST,
+            params: {id: id}
+        })
+    },
+    page(data){
+        return request({
+            url: `${api_name}/page`,
+            method: POST,
+            data: data
+        })
+    }
+}

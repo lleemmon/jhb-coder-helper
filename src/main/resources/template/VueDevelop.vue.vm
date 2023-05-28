@@ -1,0 +1,148 @@
+<template>
+    <div class="app-container">
+        <div class="filter-container">
+            #foreach($!tableColumn in $!tableColumns)
+                #if( $tableColumn.getNeedWhere() == '1' )
+                    #if( $tableColumn.getComponent() == "el-input" )
+            <el-input v-model="listQuery.$!tableColumn.getFieldName()" placeholder="请输入$!tableColumn.getRemarks()" style="width: 200px;" class="filter-item" @keyup.enter.native="loadData"/>
+                    #elseif( $tableColumn.getComponent() == "el-select" )
+            <el-select v-model="listQuery.$!tableColumn.getFieldName()" placeholder="请输入$!tableColumn.getRemarks()" clearable style="width: 200px" class="filter-item">
+                <el-option v-for="item in $tableColumn.getType()" :key="item.value" :label="item.label" :value="item.value" />
+            </el-select>
+                    #elseif( $tableColumn.getComponent() == "el-date-picker" )
+            <el-date-picker v-model="listQuery.$!tableColumn.getFieldName()" type="listQuery.$!tableColumn.getType()" style="width: 200px;" class="filter-item" placeholder="请输入$!tableColumn.getRemarks()"/>
+                    #end
+                #end
+            #end
+            <el-button v-waves :loading="listLoading" class="filter-item" type="primary" icon="el-icon-search" @click="loadData">
+                查询
+            </el-button>
+            <el-button v-waves :loading="listLoading" class="filter-item" type="primary" icon="el-icon-plus" @click="showDialog(null)">
+                添加
+            </el-button>
+        </div>
+        <el-table
+                key="id"
+                v-loading="listLoading"
+                :data="list"
+                border
+                fit
+                highlight-current-row
+                style="width: 100%;"
+        >
+            <el-table-column label="序号" type="index" align="center" width="75px"/>
+            #foreach($!tableColumn in $!tableColumns)
+                #if( $tableColumn.getNeedList() == '1' )
+                <el-table-column label="$!tableColumn.getRemarks()" align="center">
+                    <template slot-scope="{row}">
+                    #if( $tableColumn.getComponent() == "el-input" )
+                        <span>{{ row.$!tableColumn.getFieldName() }}</span>
+                    #elseif( $tableColumn.getComponent() == "el-select" )
+                        <span>{{ parseCode('row.$!tableColumn.getType()', row.$!tableColumn.getFieldName()) }}</span>
+                    #elseif( $tableColumn.getComponent() == "el-date-picker" )
+                        <span>{{ row.$!tableColumn.getFieldName() }}</span>
+                    #end
+                    </template>
+                </el-table-column>
+                #end
+            #end
+            <el-table-column label="操作" align="center" width="250" class-name="small-padding fixed-width">
+                <template slot-scope="{row}">
+                    <el-button type="primary" size="mini" @click="showDialog(row)">
+                        修改
+                    </el-button>
+                    <el-button type="danger" size="mini" @click="handleDelete(row)">
+                        删除
+                    </el-button>
+                </template>
+            </el-table-column>
+        </el-table>
+        <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="loadData" />
+        <${fieldName}FormDialog ref="${fieldName}FormDialogRef" @reload="reloadData"></${fieldName}FormDialog>
+    </div>
+</template>
+
+<script>
+    import { parseCode, getDictByDictType } from '../../${pathOffset}utils/common'
+    import api from '../../${pathOffset}api${moduleName}/${fieldName}'
+    import Pagination from '../../${pathOffset}components/Pagination'
+    import waves from '../../${pathOffset}directive/waves'
+    import ${fieldName}FormDialog from './formDialog.vue'
+
+    export default {
+        components: { Pagination, ${fieldName}FormDialog },
+        directives: { waves },
+        data() {
+            return {
+                listLoading: true,
+                listQuery: {
+                    page: 1,
+                    limit: 10,
+                    #foreach($!tableColumn in $!tableColumns)
+                        #if( $tableColumn.getNeedWhere() == '1' )
+                    $!tableColumn.getFieldName(): null,//$!tableColumn.getRemarks()
+                        #end
+                    #end
+                },
+                list: [],
+                total: 0,
+                #foreach($!dictType in $!dictTypes)
+                $dictType: [],
+                #end
+            }
+        },
+        mounted() {
+            this.reloadData()
+            #foreach($!dictType in $!dictTypes)
+            getDictByDictType('$dictType').then(res => this.$dictType = res);
+            #end
+        },
+        methods: {
+            parseCode(dictType, value){
+                return parseCode(dictType, value);
+            },
+            loadData(){
+                this.listLoading = true
+                api.page(this.listQuery).then(res => {
+                    this.listLoading = false
+                    this.list = res.data.records
+                    this.total = res.data.total
+                })
+            },
+            reloadData(){
+                this.page = 1
+                this.loadData()
+            },
+            showDialog(row){
+                this.$refs.${fieldName}FormDialogRef.show(row)
+            },
+            handleDelete(row){
+                let loading = null;
+                this.$confirm('是否删除该数据?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    loading = this.$loading({
+                        lock: true,
+                        text: '删除中......',
+                        background: 'rgba(0, 0, 0, 0.7)'
+                    });
+                    return api.delete(row.id);
+                }).then(res => {
+                    this.$message({
+                        message: '保存成功......',
+                        type: 'success'
+                    })
+                    loading.close()
+                    this.reloadData()
+                });
+            }
+        }
+    }
+</script>
+
+<style lang="scss" scoped>
+
+</style>
+
